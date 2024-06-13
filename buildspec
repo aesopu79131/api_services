@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo Installing dependencies...
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Compiling the source code...
+      #-  Your build commands here
+
+artifacts:
+  files:
+    - '**/*'
