@@ -2,14 +2,34 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      nodejs: 22    # 或 18 / 22，看你的專案需求，建議用最新 LTS
     commands:
-      - echo Installing dependencies...
+      - echo "Installing Yarn..."
+      - npm install -g yarn 
+      - yarn --version        # 驗證 yarn 是否安裝成功（log 會顯示版本）  # 全球安裝 yarn（最穩定做法）
+      # 或者用 corepack（Node.js 16.10+ 內建，比較新潮）
+      # - corepack enable
+      # - corepack prepare yarn@stable --activate
+
+  pre_build:          # 可選：安裝專案依賴
+    commands:
+      - echo "Installing project dependencies..."
+      - yarn install --frozen-lockfile   # 建議加上 --frozen-lockfile 確保一致性
+
   build:
     commands:
-      - echo Build started on `date`
-      - echo Compiling the source code...
-      #-  Your build commands here
+      - echo "Build started on `date`"
+      - echo "Running yarn build..."
+      - yarn build
+      # 如果你真的需要在 build 階段啟動（通常不建議）
+      # - yarn start &   # 背景執行，但 build 結束後還是會被殺掉
+      # - sleep 30       # 給一點時間看 log（測試用）
 
 artifacts:
   files:
     - '**/*'
+  # 更建議只上傳 build 產出物，節省空間與時間
+  # base-directory: build   # 假設 yarn build 輸出到 build/ 資料夾
+  # files:
+  #   - '**/*'

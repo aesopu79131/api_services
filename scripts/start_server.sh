@@ -11,5 +11,4 @@ if ! systemctl is-active --quiet nginx; then
   exit 1
 fi
 
-yarn build
 yarn start
