@@ -8,17 +8,17 @@ phases:
       - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
       - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:-$(date +%Y%m%d%H%M%S)}
-      - IMAGE_URI="${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:$IMAGE_TAG"
-      - echo "Image URI: $IMAGE_URI"
+      - 'IMAGE_URI="${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:$IMAGE_TAG"'
+      - echo "Image URI - $IMAGE_URI"
 
   build:
     commands:
       - echo "Building Docker image..."
       - docker build -t "$IMAGE_URI" .
-      - docker tag "$IMAGE_URI" "${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:latest"
+      - 'docker tag "$IMAGE_URI" "${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:latest"'
       - echo "Pushing to ECR..."
       - docker push "$IMAGE_URI"
-      - docker push "${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:latest"
+      - 'docker push "${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:latest"'
 
   post_build:
     commands:
@@ -26,7 +26,7 @@ phases:
       - mkdir -p deploy_bundle/scripts
       - cp appspec.yml deploy_bundle/
       - cp scripts/*.sh deploy_bundle/scripts/
-      - echo "$IMAGE_URI" > deploy_bundle/image.txt
+      - "echo \"$IMAGE_URI\" > deploy_bundle/image.txt"
       - echo "Deploy bundle ready"
 
 artifacts:
