@@ -7,6 +7,7 @@ phases:
     commands:
       - export AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query Account --output text)}
       - export AWS_REGION=${AWS_REGION:-$AWS_DEFAULT_REGION}
+      - export IMAGE_REPO_NAME=${IMAGE_REPO_NAME:-dragon-live}
       - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
       - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:-$(date +%Y%m%d%H%M%S)}
