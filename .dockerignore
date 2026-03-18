@@ -1,0 +1,23 @@
+# Dependencies and build output
+node_modules
+.next
+out
+.npm
+.yarn
+
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+*.md
+
+# AWS / deploy (not needed inside image)
+buildspec.yml
+appspec.yml
+scripts
+
+# Env and misc
+.env*
+*.log
+.DS_Store

@@ -1,35 +1,39 @@
+# AWS CodeBuild spec: build Docker image, push to ECR, produce CodeDeploy artifact
+# Set in CodeBuild project environment: ECR_REPOSITORY_URI (e.g. 123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/dragon-live)
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      nodejs: 22    # 或 18 / 22，看你的專案需求，建議用最新 LTS
+  pre_build:
     commands:
-      - echo "Installing Yarn..."
-      - npm install -g yarn 
-      - yarn --version        # 驗證 yarn 是否安裝成功（log 會顯示版本）  # 全球安裝 yarn（最穩定做法）
-      # 或者用 corepack（Node.js 16.10+ 內建，比較新潮）
-      # - corepack enable
-      # - corepack prepare yarn@stable --activate
-
-  pre_build:          # 可選：安裝專案依賴
-    commands:
-      - echo "Installing project dependencies..."
-      - yarn install --frozen-lockfile   # 建議加上 --frozen-lockfile 確保一致性
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:-$(date +%Y%m%d%H%M%S)}
+      - IMAGE_URI="${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:$IMAGE_TAG"
+      - echo "Image URI: $IMAGE_URI"
 
   build:
     commands:
-      - echo "Build started on `date`"
-      - echo "Running yarn build..."
-      - yarn build
-      # 如果你真的需要在 build 階段啟動（通常不建議）
-      # - yarn start &   # 背景執行，但 build 結束後還是會被殺掉
-      # - sleep 30       # 給一點時間看 log（測試用）
+      - echo "Building Docker image..."
+      - docker build -t "$IMAGE_URI" .
+      - docker tag "$IMAGE_URI" "${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:latest"
+      - echo "Pushing to ECR..."
+      - docker push "$IMAGE_URI"
+      - docker push "${ECR_REPOSITORY_URI:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME}:latest"
+
+  post_build:
+    commands:
+      - echo "Preparing CodeDeploy artifact..."
+      - mkdir -p deploy_bundle/scripts
+      - cp appspec.yml deploy_bundle/
+      - cp scripts/*.sh deploy_bundle/scripts/
+      - echo "$IMAGE_URI" > deploy_bundle/image.txt
+      - echo "Deploy bundle ready"
 
 artifacts:
+  base-directory: deploy_bundle
   files:
     - '**/*'
-  # 更建議只上傳 build 產出物，節省空間與時間
-  # base-directory: build   # 假設 yarn build 輸出到 build/ 資料夾
-  # files:
-  #   - '**/*'
+
+cache:
+  paths:
+    - '/root/.docker/**/*'
