@@ -10,10 +10,6 @@ permissions:
     owner: root
     group: root
     mode: 755
-  - object: /opt/dragon-live/scripts
-    owner: root
-    group: root
-    mode: 755
 hooks:
   BeforeInstall:
     - location: scripts/install_dependencies.sh
